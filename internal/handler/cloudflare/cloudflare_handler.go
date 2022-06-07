@@ -2,6 +2,7 @@ package cloudflare
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,6 +23,7 @@ import (
 type Handler struct {
 	Configuration *settings.Settings
 	API           string
+	ctx           context.Context
 }
 
 // DNSRecordResponse struct.
@@ -62,6 +64,11 @@ type ZoneResponse struct {
 type Zone struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+}
+
+// SetContext sets the context for the handler.
+func (handler *Handler) SetContext(ctx context.Context) {
+	handler.ctx = ctx
 }
 
 // SetConfiguration pass dns settings and store it to handler instance.

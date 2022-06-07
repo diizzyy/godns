@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"context"
 	"os"
 
 	"github.com/TimothyYe/godns/internal/handler"
@@ -10,7 +11,9 @@ import (
 )
 
 type DNSManager struct {
-	settings *settings.Settings
+	settings   *settings.Settings
+	cancelFunc context.CancelFunc
+	ctx        context.Context
 }
 
 func NewDNSManager(settings *settings.Settings) *DNSManager {
@@ -21,6 +24,9 @@ func NewDNSManager(settings *settings.Settings) *DNSManager {
 
 func (d *DNSManager) Run() error {
 	panicChan := make(chan settings.Domain)
+	ctx, cancel := context.WithCancel(context.Background())
+	d.ctx = ctx
+	d.cancelFunc = cancel
 
 	h := handler.CreateHandler(d.settings.Provider)
 	h.SetConfiguration(d.settings)

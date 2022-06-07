@@ -2,6 +2,7 @@ package scaleway
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,6 +26,7 @@ var (
 // Handler struct.
 type Handler struct {
 	Configuration *settings.Settings
+	ctx           context.Context
 }
 
 // Record for Scaleway API.
@@ -55,6 +57,11 @@ type DNSChange struct {
 // DNSUpdateRequest for Scaleway API.
 type DNSUpdateRequest struct {
 	Changes []DNSChange `json:"changes"`
+}
+
+// SetContext sets the context for the handler.
+func (handler *Handler) SetContext(ctx context.Context) {
+	handler.ctx = ctx
 }
 
 // SetConfiguration pass dns settings and store it to handler instance.

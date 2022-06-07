@@ -1,6 +1,7 @@
 package dreamhost
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -26,6 +27,12 @@ var (
 // Handler struct.
 type Handler struct {
 	Configuration *settings.Settings
+	ctx           context.Context
+}
+
+// SetContext sets the context for the handler.
+func (handler *Handler) SetContext(ctx context.Context) {
+	handler.ctx = ctx
 }
 
 // SetConfiguration pass dns settings and store it to handler instance.
@@ -79,7 +86,6 @@ func (handler *Handler) DomainLoop(domain *settings.Domain, panicChan chan<- set
 			}
 		}
 	}
-
 }
 
 // UpdateIP update subdomain with current IP.

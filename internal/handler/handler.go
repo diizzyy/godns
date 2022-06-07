@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+
 	"github.com/TimothyYe/godns/internal/handler/alidns"
 	"github.com/TimothyYe/godns/internal/handler/cloudflare"
 	"github.com/TimothyYe/godns/internal/handler/dnspod"
@@ -18,6 +20,7 @@ import (
 
 // IHandler is the interface for all DNS handlers.
 type IHandler interface {
+	SetContext(ctx context.Context)
 	SetConfiguration(*settings.Settings)
 	DomainLoop(domain *settings.Domain, panicChan chan<- settings.Domain, runOnce bool)
 }

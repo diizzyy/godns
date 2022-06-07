@@ -1,6 +1,7 @@
 package linode
 
 import (
+	"context"
 	"fmt"
 	"runtime/debug"
 	"time"
@@ -22,6 +23,12 @@ type Handler struct {
 	client        IDNSClient
 	cachedIP      string
 	notifyManager notification.INotificationManager
+	ctx           context.Context
+}
+
+// SetContext sets the context for the handler.
+func (handler *Handler) SetContext(ctx context.Context) {
+	handler.ctx = ctx
 }
 
 func (handler *Handler) SetConfiguration(conf *settings.Settings) {
