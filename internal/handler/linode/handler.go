@@ -47,11 +47,10 @@ func createDNSClient(conf *settings.Settings) IDNSClient {
 	return CreateLinodeDNSClient(&linodeAPIClient)
 }
 
-func (handler *Handler) DomainLoop(domain *settings.Domain, panicChan chan<- settings.Domain, runOnce bool) {
+func (handler *Handler) DomainLoop(domain *settings.Domain, runOnce bool) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Errorf("Recovered in %v: %v", err, string(debug.Stack()))
-			panicChan <- *domain
 		}
 	}()
 

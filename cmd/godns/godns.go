@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/TimothyYe/godns/internal/handler"
+	"github.com/TimothyYe/godns/internal/manager"
 	"github.com/TimothyYe/godns/internal/settings"
 	"github.com/TimothyYe/godns/internal/utils"
 
@@ -14,9 +16,9 @@ import (
 )
 
 var (
-	configuration settings.Settings
-	optConf       = flag.String("c", "./config.json", "Specify a config file")
-	optHelp       = flag.Bool("h", false, "Show help")
+	conf    settings.Settings
+	optConf = flag.String("c", "./config.json", "Specify a config file")
+	optHelp = flag.Bool("h", false, "Show help")
 
 	// Version is current version of GoDNS.
 	Version = "0.1"
@@ -35,52 +37,30 @@ func main() {
 	}
 
 	// Load settings from configurations file
-	if err := settings.LoadSettings(*optConf, &configuration); err != nil {
+	if err := settings.LoadSettings(*optConf, &conf); err != nil {
 		log.Fatal(err)
 	}
 
-	if configuration.DebugInfo {
+	if conf.DebugInfo {
 		log.SetLevel(log.DebugLevel)
 	} else {
 		log.SetLevel(log.InfoLevel)
 	}
 
-	if err := utils.CheckSettings(&configuration); err != nil {
+	if err := utils.CheckSettings(&conf); err != nil {
 		log.Fatal("Invalid settings! ", err.Error())
 	}
 
-	// Init log settings
-	log.Info("GoDNS started, entering main loop...")
-	dnsLoop()
-}
-
-func dnsLoop() {
-	panicChan := make(chan settings.Domain)
-
-	log.Infof("Creating DNS handler with provider: %s", configuration.Provider)
-	h := handler.CreateHandler(configuration.Provider)
-	h.SetConfiguration(&configuration)
-	for _, domain := range configuration.Domains {
-		if configuration.RunOnce {
-			h.DomainLoop(&domain, panicChan, configuration.RunOnce)
-		} else {
-			go h.DomainLoop(&domain, panicChan, configuration.RunOnce)
-		}
+	// start the dns manager
+	manager := manager.NewDNSManager(&conf)
+	if err := manager.Run(); err != nil {
+		log.Fatal("Failed to start the DNS manager:", err)
 	}
 
-	if configuration.RunOnce {
-		os.Exit(0)
-	}
+	log.Info("GoDNS started...")
 
-	panicCount := 0
-	for {
-		failDomain := <-panicChan
-		log.Debug("Got panic in goroutine, will start a new one... :", panicCount)
-		go h.DomainLoop(&failDomain, panicChan, configuration.RunOnce)
-
-		panicCount++
-		if panicCount >= utils.PanicMax {
-			os.Exit(1)
-		}
-	}
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	<-sigCh
+	manager.Stop()
 }

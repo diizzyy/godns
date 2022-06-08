@@ -22,7 +22,7 @@ import (
 type IHandler interface {
 	SetContext(ctx context.Context)
 	SetConfiguration(*settings.Settings)
-	DomainLoop(domain *settings.Domain, panicChan chan<- settings.Domain, runOnce bool)
+	DomainLoop(domain *settings.Domain, runOnce bool)
 }
 
 // CreateHandler creates DNS handler by different providers.
