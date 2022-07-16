@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"runtime/debug"
 	"time"
 
 	"github.com/TimothyYe/godns/internal/provider"
@@ -31,14 +30,7 @@ func (handler *Handler) SetProvider(provider provider.IDNSProvider) {
 	handler.dnsProvider = provider
 }
 
-func (handler *Handler) DomainLoop(domain *settings.Domain, panicChan chan<- settings.Domain, runOnce bool) {
-	defer func() {
-		if err := recover(); err != nil {
-			log.Errorf("Recovered in %v: %v", err, string(debug.Stack()))
-			panicChan <- *domain
-		}
-	}()
-
+func (handler *Handler) DomainLoop(domain *settings.Domain, runOnce bool) {
 	for while := true; while; while = !runOnce {
 		handler.domainLoop(domain)
 

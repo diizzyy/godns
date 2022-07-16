@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/TimothyYe/godns/internal/handler"
+	"github.com/TimothyYe/godns/internal/manager"
 	"github.com/TimothyYe/godns/internal/settings"
 	"github.com/TimothyYe/godns/internal/utils"
 
@@ -49,43 +51,16 @@ func main() {
 		log.Fatal("Invalid settings: ", err.Error())
 	}
 
-	// Init log settings
-	log.Info("GoDNS started, entering main loop...")
-	dnsLoop()
-}
-
-func dnsLoop() {
-	panicChan := make(chan settings.Domain)
-
-	log.Infof("Creating DNS handler with provider: %s", configuration.Provider)
-	h, err := handler.CreateHandler(&configuration)
-	if err != nil {
-		log.Fatal(err)
+	// start the dns manager
+	manager := manager.NewDNSManager(&configuration)
+	if err := manager.Run(); err != nil {
+		log.Fatal("Failed to start the DNS manager:", err)
 	}
 
-	h.SetConfiguration(&configuration)
-	for _, domain := range configuration.Domains {
-		domain := domain
-		if configuration.RunOnce {
-			h.DomainLoop(&domain, panicChan, configuration.RunOnce)
-		} else {
-			go h.DomainLoop(&domain, panicChan, configuration.RunOnce)
-		}
-	}
+	log.Info("GoDNS started...")
 
-	if configuration.RunOnce {
-		os.Exit(0)
-	}
-
-	panicCount := 0
-	for {
-		failDomain := <-panicChan
-		log.Debug("Got panic in goroutine, will start a new one... :", panicCount)
-		go h.DomainLoop(&failDomain, panicChan, configuration.RunOnce)
-
-		panicCount++
-		if panicCount >= utils.PanicMax {
-			os.Exit(1)
-		}
-	}
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	<-sigCh
+	manager.Stop()
 }
