@@ -16,7 +16,7 @@ import (
 )
 
 type Handler struct {
-	Configuration       *settings.Settings
+	conf                *settings.Settings
 	ctx                 context.Context
 	dnsProvider         provider.IDNSProvider
 	notificationManager notification.INotificationManager
@@ -25,11 +25,11 @@ type Handler struct {
 
 func NewHandler(ctx context.Context, conf *settings.Settings) Handler {
 	handler := Handler{
-		Configuration: conf,
-		ctx:           ctx,
+		conf: conf,
+		ctx:  ctx,
 	}
 
-	handler.notificationManager = notification.GetNotificationManager(handler.Configuration)
+	handler.notificationManager = notification.GetNotificationManager(handler.conf)
 	return handler
 }
 
@@ -45,13 +45,13 @@ func (handler *Handler) DomainLoop(domain *settings.Domain, runOnce bool) {
 			break
 		}
 
-		log.Debugf("DNS update loop finished, will run again in %d seconds", handler.Configuration.Interval)
-		time.Sleep(time.Second * time.Duration(handler.Configuration.Interval))
+		log.Debugf("DNS update loop finished, will run again in %d seconds", handler.conf.Interval)
+		time.Sleep(time.Second * time.Duration(handler.conf.Interval))
 	}
 }
 
 func (handler *Handler) domainLoop(domain *settings.Domain) {
-	ip, err := utils.GetCurrentIP(handler.Configuration)
+	ip, err := utils.GetCurrentIP(handler.conf)
 	if err != nil {
 		log.Error(err)
 		return
@@ -79,7 +79,7 @@ func (handler *Handler) updateDNS(domain *settings.Domain, ip string) error {
 			hostname = domain.DomainName
 		}
 
-		lastIP, err := utils.ResolveDNS(hostname, handler.Configuration.Resolver, handler.Configuration.IPType)
+		lastIP, err := utils.ResolveDNS(hostname, handler.conf.Resolver, handler.conf.IPType)
 		if err != nil {
 			log.Error(err)
 			continue
@@ -97,8 +97,8 @@ func (handler *Handler) updateDNS(domain *settings.Domain, ip string) error {
 			handler.notificationManager.Send(successMessage, ip)
 
 			// execute webhook when it is enabled
-			if handler.Configuration.Webhook.Enabled {
-				if err := lib.GetWebhook(handler.Configuration).Execute(hostname, ip); err != nil {
+			if handler.conf.Webhook.Enabled {
+				if err := lib.GetWebhook(handler.conf).Execute(hostname, ip); err != nil {
 					return err
 				}
 			}
