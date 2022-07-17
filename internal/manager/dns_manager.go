@@ -26,12 +26,11 @@ func (d *DNSManager) Run() error {
 	d.ctx = ctx
 	d.cancelFunc = cancel
 
-	h, err := handler.CreateHandler(d.settings)
+	h, err := handler.CreateHandler(d.ctx, d.settings)
 	if err != nil {
 		return err
 	}
 
-	h.SetConfiguration(d.settings)
 	for _, domain := range d.settings.Domains {
 		domain := domain
 		if d.settings.RunOnce {

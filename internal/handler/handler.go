@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -16,14 +17,20 @@ import (
 
 type Handler struct {
 	Configuration       *settings.Settings
+	ctx                 context.Context
 	dnsProvider         provider.IDNSProvider
 	notificationManager notification.INotificationManager
 	cachedIP            string
 }
 
-func (handler *Handler) SetConfiguration(conf *settings.Settings) {
-	handler.Configuration = conf
+func NewHandler(ctx context.Context, conf *settings.Settings) Handler {
+	handler := Handler{
+		Configuration: conf,
+		ctx:           ctx,
+	}
+
 	handler.notificationManager = notification.GetNotificationManager(handler.Configuration)
+	return handler
 }
 
 func (handler *Handler) SetProvider(provider provider.IDNSProvider) {

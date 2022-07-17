@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+
 	"github.com/TimothyYe/godns/internal/provider/alidns"
 	"github.com/TimothyYe/godns/internal/provider/cloudflare"
 	"github.com/TimothyYe/godns/internal/provider/dnspod"
@@ -18,14 +20,13 @@ import (
 
 // IHandler is the interface for all DNS handlers.
 type IHandler interface {
-	SetConfiguration(*settings.Settings)
 	DomainLoop(domain *settings.Domain, runOnce bool)
 }
 
 // CreateHandler creates DNS handler by different providers.
-func CreateHandler(conf *settings.Settings) (IHandler, error) {
+func CreateHandler(ctx context.Context, conf *settings.Settings) (IHandler, error) {
 	var handler IHandler
-	genericHandler := Handler{}
+	genericHandler := NewHandler(ctx, conf)
 
 	switch conf.Provider {
 	case utils.CLOUDFLARE:
